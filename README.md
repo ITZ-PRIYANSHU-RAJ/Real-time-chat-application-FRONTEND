@@ -54,7 +54,7 @@ src
 ### Clone the repository
 
 ```
-git clone https://github.com/YOUR-USERNAME/chat-app-frontend.git
+git clone https://github.com/ITZ-PRIYANSHU-RAJ/Real-time-chat-application---FRONTEND
 ```
 
 ### Navigate to project folder
@@ -88,7 +88,7 @@ http://localhost:3000
 This frontend connects to the backend server available here:
 
 ```
-https://github.com/ITZ-PRIYANSHU-RAJ/real-time-chat-application --BACKEND
+https://github.com/ITZ-PRIYANSHU-RAJ/real-time-chat-application-BACKEND
 ```
 
 ---
