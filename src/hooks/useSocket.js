@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "https://real-time-chat-application-backend-fmim.onrender.com";
 
 export const useSocket = (userId) => {
   const [socket, setSocket] = useState(null);
