@@ -70,11 +70,11 @@ button {
 }
 
 .auth-hero {
-  border-radius: 32px;
   padding: 56px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   background:
     linear-gradient(135deg, rgba(8, 15, 28, 0.9), rgba(17, 29, 49, 0.74)),
     rgba(16, 23, 41, 0.78);
@@ -87,7 +87,6 @@ button {
 .auth-hero::after {
   content: "";
   position: absolute;
-  border-radius: 50%;
   filter: blur(8px);
   opacity: 0.7;
   pointer-events: none;
@@ -257,8 +256,8 @@ button {
   justify-content: center;
   gap: 14px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04)),
-    rgba(12, 18, 34, 0.92);
+    linear-gradient(180deg, rgba(208, 4, 4, 0.09), rgba(255, 255, 255, 0.04)),
+    rgba(3, 127, 113, 0.92);
   position: relative;
   overflow: hidden;
   animation: fadeUp 0.8s ease 0.12s both;
@@ -271,7 +270,6 @@ button {
 }
 
 .auth-card-badge {
-  border-radius: 999px;
   padding: 8px 12px;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -282,11 +280,11 @@ button {
 }
 
 .auth-card-glow {
-  width: 72px;
+  width: 24px;
   height: 12px;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--accent), var(--teal));
-  box-shadow: 0 0 30px rgba(45, 212, 191, 0.35);
+  box-shadow: 0 0 30px rgba(9, 199, 174, 0.35);
 }
 
 .auth-card-copy {
