@@ -44,7 +44,6 @@ const Register = () => {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4">
 
-      {/* Background Glow */}
       <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
 
       <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl" />
@@ -57,7 +56,6 @@ const Register = () => {
       >
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
 
-          {/* Heading */}
           <div className="mb-7 text-center">
             <motion.h1
               initial={{ opacity: 0, y: -10 }}
@@ -73,7 +71,6 @@ const Register = () => {
             </p>
           </div>
 
-          {/* Error */}
           {error && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
@@ -89,7 +86,6 @@ const Register = () => {
             className="space-y-4"
           >
 
-            {/* Full Name */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Full Name
@@ -106,7 +102,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Username */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Username
@@ -123,7 +118,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Email
@@ -140,7 +134,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Password
@@ -158,7 +151,6 @@ const Register = () => {
               />
             </div>
 
-            {/* Register Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -171,7 +163,6 @@ const Register = () => {
 
           </form>
 
-          {/* Login */}
           <div className="mt-6 text-center text-sm text-slate-400">
             Already have an account?{" "}
 
