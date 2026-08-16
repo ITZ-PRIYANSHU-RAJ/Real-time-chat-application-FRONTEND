@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
 import api from "../services/api.js";
 import { socket } from "../lib/socket.js";
 
@@ -8,6 +14,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ==========================================
+  // CHECK AUTH
+  // ==========================================
+
   const checkAuth = async () => {
     try {
       const response = await api.get("/auth/me");
@@ -16,11 +26,20 @@ export const AuthProvider = ({ children }) => {
         setUser(response.data.user);
       }
     } catch (error) {
+      console.log(
+        "Auth check:",
+        error.response?.data?.message || error.message
+      );
+
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
+
+  // ==========================================
+  // LOGIN
+  // ==========================================
 
   const login = async (email, password) => {
     try {
@@ -32,10 +51,6 @@ export const AuthProvider = ({ children }) => {
       const loggedInUser = response.data.user;
 
       setUser(loggedInUser);
-
-      socket.connect();
-
-      socket.emit("user-online", loggedInUser._id);
 
       return {
         success: true,
@@ -55,17 +70,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ==========================================
+  // REGISTER
+  // ==========================================
+
   const register = async (userData) => {
     try {
-      const response = await api.post("/auth/register", userData);
+      const response = await api.post(
+        "/auth/register",
+        userData
+      );
 
       const registeredUser = response.data.user;
 
       setUser(registeredUser);
-
-      socket.connect();
-
-      socket.emit("user-online", registeredUser._id);
 
       return {
         success: true,
@@ -80,16 +98,22 @@ export const AuthProvider = ({ children }) => {
       return {
         success: false,
         message:
-          error.response?.data?.message || "Registration failed",
+          error.response?.data?.message ||
+          "Registration failed",
       };
     }
   };
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
 
   const logout = async () => {
     try {
       await api.post("/auth/logout");
 
       socket.disconnect();
+
       setUser(null);
     } catch (error) {
       console.error(
@@ -99,22 +123,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ==========================================
+  // CHECK AUTH ON APP LOAD
+  // ==========================================
+
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // ==========================================
+  // SOCKET CONNECTION
+  // ==========================================
+
   useEffect(() => {
-    if (user?._id && !socket.connected) {
-      socket.connect();
+    if (!user?._id) return;
+
+    const handleConnect = () => {
+      console.log(
+        "🟢 Socket connected:",
+        socket.id
+      );
+
       socket.emit("user-online", user._id);
+    };
+
+    if (!socket.connected) {
+      socket.connect();
+    } else {
+      handleConnect();
     }
 
+    socket.on("connect", handleConnect);
+
     return () => {
-      if (socket.connected) {
-        socket.disconnect();
-      }
+      socket.off("connect", handleConnect);
     };
-  }, [user]);
+  }, [user?._id]);
 
   return (
     <AuthContext.Provider
@@ -131,7 +175,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook
+// ==========================================
+// CUSTOM HOOK
+// ==========================================
+
 export const useAuth = () => {
   return useContext(AuthContext);
 };

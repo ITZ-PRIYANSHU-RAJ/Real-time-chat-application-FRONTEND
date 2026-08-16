@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import api from "../services/api.js";
 import { socket } from "../lib/socket.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -9,7 +10,11 @@ const ChatWindow = ({ selectedUser }) => {
 
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+
   const [loading, setLoading] = useState(false);
+
+  const [isOnline, setIsOnline] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -19,10 +24,14 @@ const ChatWindow = ({ selectedUser }) => {
 
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!selectedUser?._id) return;
+      if (!selectedUser?._id) {
+        setMessages([]);
+        return;
+      }
 
       try {
         setLoading(true);
+        setIsTyping(false);
 
         const response = await api.get(
           `/messages/${selectedUser._id}`
@@ -56,8 +65,11 @@ const ChatWindow = ({ selectedUser }) => {
       const receiverId =
         message.receiver?._id || message.receiver;
 
-      const currentUserId = user?._id?.toString();
-      const selectedUserId = selectedUser?._id?.toString();
+      const currentUserId =
+        user?._id?.toString();
+
+      const selectedUserId =
+        selectedUser?._id?.toString();
 
       const isCurrentConversation =
         (senderId?.toString() === selectedUserId &&
@@ -65,10 +77,11 @@ const ChatWindow = ({ selectedUser }) => {
         (senderId?.toString() === currentUserId &&
           receiverId?.toString() === selectedUserId);
 
-      if (!isCurrentConversation) return;
+      if (!isCurrentConversation) {
+        return;
+      }
 
       setMessages((prev) => {
-        // Prevent duplicate messages
         const alreadyExists = prev.some(
           (msg) => msg._id === message._id
         );
@@ -89,6 +102,112 @@ const ChatWindow = ({ selectedUser }) => {
   }, [user?._id, selectedUser?._id]);
 
   // ==========================================
+  // ONLINE / OFFLINE STATUS
+  // ==========================================
+
+  useEffect(() => {
+    if (!selectedUser?._id) {
+      setIsOnline(false);
+      return;
+    }
+
+    const selectedUserId =
+      selectedUser._id.toString();
+
+    // Receive current online users
+    const handleOnlineUsers = (userIds) => {
+      const online = userIds.some(
+        (id) => id.toString() === selectedUserId
+      );
+
+      setIsOnline(online);
+    };
+
+    // Receive status changes
+    const handleUserStatus = (data) => {
+      if (
+        data.userId?.toString() === selectedUserId
+      ) {
+        setIsOnline(data.online);
+      }
+    };
+
+    socket.on(
+      "online-users",
+      handleOnlineUsers
+    );
+
+    socket.on(
+      "user-status",
+      handleUserStatus
+    );
+
+    return () => {
+      socket.off(
+        "online-users",
+        handleOnlineUsers
+      );
+
+      socket.off(
+        "user-status",
+        handleUserStatus
+      );
+    };
+  }, [selectedUser]);
+
+  // ==========================================
+  // TYPING INDICATOR
+  // ==========================================
+
+  useEffect(() => {
+    if (!selectedUser?._id) {
+      setIsTyping(false);
+      return;
+    }
+
+    const selectedUserId =
+      selectedUser._id.toString();
+
+    const handleUserTyping = ({ userId }) => {
+      if (
+        userId?.toString() === selectedUserId
+      ) {
+        setIsTyping(true);
+      }
+    };
+
+    const handleUserStoppedTyping = ({ userId }) => {
+      if (
+        userId?.toString() === selectedUserId
+      ) {
+        setIsTyping(false);
+      }
+    };
+
+    socket.on(
+      "user-typing",
+      handleUserTyping
+    );
+
+    socket.on(
+      "user-stopped-typing",
+      handleUserStoppedTyping
+    );
+
+    return () => {
+      socket.off(
+        "user-typing",
+        handleUserTyping
+      );
+
+      socket.off(
+        "user-stopped-typing",
+        handleUserStoppedTyping
+      );
+    };
+  }, [selectedUser]);
+
+  // ==========================================
   // AUTO SCROLL
   // ==========================================
 
@@ -96,7 +215,37 @@ const ChatWindow = ({ selectedUser }) => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messages, isTyping]);
+
+  // ==========================================
+  // HANDLE TYPING
+  // ==========================================
+
+  const handleTyping = (e) => {
+    const value = e.target.value;
+
+    setText(value);
+
+    if (!selectedUser?._id || !user?._id) {
+      return;
+    }
+
+    if (!socket.connected) {
+      return;
+    }
+
+    if (value.trim()) {
+      socket.emit("typing-start", {
+        senderId: user._id,
+        receiverId: selectedUser._id,
+      });
+    } else {
+      socket.emit("typing-stop", {
+        senderId: user._id,
+        receiverId: selectedUser._id,
+      });
+    }
+  };
 
   // ==========================================
   // SEND MESSAGE
@@ -105,22 +254,43 @@ const ChatWindow = ({ selectedUser }) => {
   const handleSendMessage = (e) => {
     e.preventDefault();
 
-    if (!text.trim()) return;
-    if (!selectedUser?._id) return;
-    if (!user?._id) return;
+    const trimmedText = text.trim();
 
-    if (!socket.connected) {
-      console.error("Socket is not connected");
+    if (!trimmedText) {
       return;
     }
 
+    if (!selectedUser?._id) {
+      return;
+    }
+
+    if (!user?._id) {
+      return;
+    }
+
+    if (!socket.connected) {
+      console.error(
+        "Socket is not connected"
+      );
+
+      return;
+    }
+
+    // Stop typing
+    socket.emit("typing-stop", {
+      senderId: user._id,
+      receiverId: selectedUser._id,
+    });
+
+    // Send message
     socket.emit("send-message", {
       senderId: user._id,
       receiverId: selectedUser._id,
-      text: text.trim(),
+      text: trimmedText,
     });
 
     setText("");
+    setIsTyping(false);
   };
 
   // ==========================================
@@ -131,25 +301,38 @@ const ChatWindow = ({ selectedUser }) => {
     return (
       <main className="hidden flex-1 items-center justify-center md:flex">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center text-slate-500"
+          initial={{
+            opacity: 0,
+            scale: 0.9,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+          }}
+          transition={{
+            duration: 0.4,
+          }}
+          className="text-center"
         >
-          <div className="mb-4 text-5xl">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 text-4xl">
             💬
           </div>
 
-          <h2 className="text-xl font-semibold text-white">
-            Select a conversation
+          <h2 className="text-2xl font-semibold text-white">
+            Welcome to Talksy
           </h2>
 
-          <p className="mt-2">
-            Search for a user to start chatting.
+          <p className="mt-2 text-slate-500">
+            Search for a user and start a conversation.
           </p>
         </motion.div>
       </main>
     );
   }
+
+  // ==========================================
+  // CHAT UI
+  // ==========================================
 
   return (
     <main className="flex flex-1 flex-col">
@@ -160,116 +343,225 @@ const ChatWindow = ({ selectedUser }) => {
 
       <div className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-6 py-4">
 
+        {/* Avatar */}
+
         <div className="relative">
+
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 font-bold">
             {selectedUser.fullName
               ?.charAt(0)
               .toUpperCase()}
           </div>
 
-          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950 bg-green-400" />
+          {/* Online Dot */}
+
+          <span
+            className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950 ${
+              isOnline
+                ? "bg-green-400"
+                : "bg-slate-500"
+            }`}
+          />
+
         </div>
 
+        {/* User Information */}
+
         <div>
-          <h2 className="font-semibold">
+          <h2 className="font-semibold text-white">
             {selectedUser.fullName}
           </h2>
 
-          <p className="text-xs text-green-400">
-            Online
-          </p>
+          <div className="flex items-center gap-1.5">
+
+            <span
+              className={`h-2 w-2 rounded-full ${
+                isOnline
+                  ? "bg-green-400"
+                  : "bg-slate-500"
+              }`}
+            />
+
+            <p
+              className={`text-xs ${
+                isOnline
+                  ? "text-green-400"
+                  : "text-slate-500"
+              }`}
+            >
+              {isOnline
+                ? "Online"
+                : "Offline"}
+            </p>
+
+          </div>
         </div>
 
       </div>
 
       {/* ======================================
-          MESSAGES
+          MESSAGE AREA
       ====================================== */}
 
       <div className="flex-1 space-y-3 overflow-y-auto p-6">
 
+        {/* Loading */}
+
         {loading && (
-          <div className="text-center text-sm text-slate-500">
-            Loading messages...
-          </div>
-        )}
+          <div className="flex h-full items-center justify-center">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-cyan-400" />
 
-        {!loading && messages.length === 0 && (
-          <div className="flex h-full items-center justify-center text-center text-slate-500">
-            <div>
-              <p className="text-lg">
-                No messages yet
-              </p>
-
-              <p className="mt-1 text-sm">
-                Send a message to start the conversation.
-              </p>
+              Loading messages...
             </div>
           </div>
         )}
 
-        <AnimatePresence initial={false}>
-          {messages.map((message) => {
-            const senderId =
-              message.sender?._id || message.sender;
+        {/* Empty Conversation */}
 
-            const isMine =
-              senderId?.toString() ===
-              user?._id?.toString();
+        {!loading &&
+          messages.length === 0 && (
+            <div className="flex h-full items-center justify-center text-center text-slate-500">
 
-            return (
-              <motion.div
-                key={message._id}
-                initial={{
-                  opacity: 0,
-                  y: 10,
-                  scale: 0.95,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                }}
-                className={`flex ${
-                  isMine
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+              <div>
+
+                <div className="mb-3 text-4xl">
+                  👋
+                </div>
+
+                <p className="text-lg text-slate-400">
+                  No messages yet
+                </p>
+
+                <p className="mt-1 text-sm">
+                  Send a message to start the conversation.
+                </p>
+
+              </div>
+
+            </div>
+          )}
+
+        {/* Messages */}
+
+        {!loading && (
+          <AnimatePresence initial={false}>
+            {messages.map((message) => {
+
+              const senderId =
+                message.sender?._id ||
+                message.sender;
+
+              const isMine =
+                senderId?.toString() ===
+                user?._id?.toString();
+
+              return (
+                <motion.div
+                  key={message._id}
+                  initial={{
+                    opacity: 0,
+                    y: 10,
+                    scale: 0.95,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                  }}
+                  className={`flex ${
                     isMine
-                      ? "rounded-br-md bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
-                      : "rounded-bl-md bg-white/10 text-slate-200"
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
-                  <p className="break-words">
-                    {message.text}
-                  </p>
 
-                  <p
-                    className={`mt-1 text-[10px] ${
+                  <div
+                    className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-lg ${
                       isMine
-                        ? "text-white/60"
-                        : "text-slate-500"
+                        ? "rounded-br-md bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
+                        : "rounded-bl-md bg-white/10 text-slate-200"
                     }`}
                   >
-                    {message.createdAt
-                      ? new Date(
+
+                    {/* Text */}
+
+                    {message.text && (
+                      <p className="break-words whitespace-pre-wrap">
+                        {message.text}
+                      </p>
+                    )}
+
+                    {/* Time */}
+
+                    {message.createdAt && (
+                      <p
+                        className={`mt-1 text-[10px] ${
+                          isMine
+                            ? "text-white/60"
+                            : "text-slate-500"
+                        }`}
+                      >
+                        {new Date(
                           message.createdAt
                         ).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
-                        })
-                      : ""}
-                  </p>
-                </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+                        })}
+                      </p>
+                    )}
+
+                  </div>
+
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        )}
+
+        {/* Typing Indicator */}
+
+        {isTyping && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 5,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            className="flex items-center gap-2 px-2"
+          >
+
+            <div className="rounded-2xl rounded-bl-md bg-white/10 px-4 py-3">
+
+              <div className="flex items-center gap-1">
+
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400" />
+
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:150ms]" />
+
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:300ms]" />
+
+              </div>
+
+            </div>
+
+            <span className="text-xs text-slate-500">
+              {selectedUser.fullName} is typing...
+            </span>
+
+          </motion.div>
+        )}
+
+        {/* Scroll Target */}
 
         <div ref={messagesEndRef} />
+
       </div>
 
       {/* ======================================
@@ -280,27 +572,37 @@ const ChatWindow = ({ selectedUser }) => {
         onSubmit={handleSendMessage}
         className="border-t border-white/10 bg-white/[0.02] p-4"
       >
+
         <div className="flex gap-3">
+
+          {/* Input */}
 
           <input
             type="text"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTyping}
             placeholder={`Message ${selectedUser.fullName}...`}
-            className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/40"
+            className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/10"
           />
 
+          {/* Send */}
+
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{
+              scale: 1.05,
+            }}
+            whileTap={{
+              scale: 0.95,
+            }}
             type="submit"
             disabled={!text.trim()}
-            className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 px-5 font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 px-5 font-semibold text-white shadow-lg shadow-purple-500/20 transition disabled:cursor-not-allowed disabled:opacity-40"
           >
             ➤
           </motion.button>
 
         </div>
+
       </form>
 
     </main>

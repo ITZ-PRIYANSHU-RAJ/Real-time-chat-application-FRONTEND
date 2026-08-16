@@ -1,33 +1,50 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Chat from "./pages/Chat.jsx";
 
-function Chat() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
-      <h1 className="text-3xl font-bold">
-        Chat App 🚀
-      </h1>
-    </div>
-  );
-}
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* Public Routes */}
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* ================= PUBLIC ROUTES ================= */}
 
-        {/* Protected Routes */}
+        <Route
+          path="/"
+          element={<Navigate to="/login" replace />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+
+        {/* ================= PROTECTED ROUTES ================= */}
+
         <Route element={<ProtectedRoute />}>
-          <Route path="/chat" element={<Chat />} />
+          <Route
+            path="/chat"
+            element={<Chat />}
+          />
         </Route>
+
+
+        {/* ================= 404 ================= */}
+
+        <Route
+          path="*"
+          element={<Navigate to="/login" replace />}
+        />
 
       </Routes>
     </BrowserRouter>
