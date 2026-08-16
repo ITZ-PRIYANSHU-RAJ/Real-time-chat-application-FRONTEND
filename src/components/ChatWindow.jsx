@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api.js";
+import { socket } from "../lib/socket.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const ChatWindow = ({ selectedUser }) => {
@@ -12,7 +13,10 @@ const ChatWindow = ({ selectedUser }) => {
 
   const messagesEndRef = useRef(null);
 
-  // Get conversation
+  // ==========================================
+  // GET OLD MESSAGES
+  // ==========================================
+
   useEffect(() => {
     const fetchMessages = async () => {
       if (!selectedUser?._id) return;
@@ -40,44 +44,100 @@ const ChatWindow = ({ selectedUser }) => {
     fetchMessages();
   }, [selectedUser]);
 
-  // Auto scroll
+  // ==========================================
+  // RECEIVE REAL-TIME MESSAGE
+  // ==========================================
+
+  useEffect(() => {
+    const handleNewMessage = (message) => {
+      const senderId =
+        message.sender?._id || message.sender;
+
+      const receiverId =
+        message.receiver?._id || message.receiver;
+
+      const currentUserId = user?._id?.toString();
+      const selectedUserId = selectedUser?._id?.toString();
+
+      const isCurrentConversation =
+        (senderId?.toString() === selectedUserId &&
+          receiverId?.toString() === currentUserId) ||
+        (senderId?.toString() === currentUserId &&
+          receiverId?.toString() === selectedUserId);
+
+      if (!isCurrentConversation) return;
+
+      setMessages((prev) => {
+        // Prevent duplicate messages
+        const alreadyExists = prev.some(
+          (msg) => msg._id === message._id
+        );
+
+        if (alreadyExists) {
+          return prev;
+        }
+
+        return [...prev, message];
+      });
+    };
+
+    socket.on("new-message", handleNewMessage);
+
+    return () => {
+      socket.off("new-message", handleNewMessage);
+    };
+  }, [user?._id, selectedUser?._id]);
+
+  // ==========================================
+  // AUTO SCROLL
+  // ==========================================
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages]);
 
-  // Send message
-  const handleSendMessage = async (e) => {
+  // ==========================================
+  // SEND MESSAGE
+  // ==========================================
+
+  const handleSendMessage = (e) => {
     e.preventDefault();
 
-    if (!text.trim() || !selectedUser?._id) return;
+    if (!text.trim()) return;
+    if (!selectedUser?._id) return;
+    if (!user?._id) return;
 
-    try {
-      const response = await api.post("/messages/send", {
-        receiverId: selectedUser._id,
-        text: text.trim(),
-      });
-
-      setMessages((prev) => [
-        ...prev,
-        response.data.data,
-      ]);
-
-      setText("");
-    } catch (error) {
-      console.error(
-        "Send Message Error:",
-        error.response?.data?.message || error.message
-      );
+    if (!socket.connected) {
+      console.error("Socket is not connected");
+      return;
     }
+
+    socket.emit("send-message", {
+      senderId: user._id,
+      receiverId: selectedUser._id,
+      text: text.trim(),
+    });
+
+    setText("");
   };
+
+  // ==========================================
+  // NO USER SELECTED
+  // ==========================================
 
   if (!selectedUser) {
     return (
       <main className="hidden flex-1 items-center justify-center md:flex">
-        <div className="text-center text-slate-500">
-          <div className="mb-4 text-5xl">💬</div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center text-slate-500"
+        >
+          <div className="mb-4 text-5xl">
+            💬
+          </div>
 
           <h2 className="text-xl font-semibold text-white">
             Select a conversation
@@ -86,7 +146,7 @@ const ChatWindow = ({ selectedUser }) => {
           <p className="mt-2">
             Search for a user to start chatting.
           </p>
-        </div>
+        </motion.div>
       </main>
     );
   }
@@ -94,7 +154,10 @@ const ChatWindow = ({ selectedUser }) => {
   return (
     <main className="flex flex-1 flex-col">
 
-      {/* Header */}
+      {/* ======================================
+          CHAT HEADER
+      ====================================== */}
+
       <div className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-6 py-4">
 
         <div className="relative">
@@ -104,7 +167,6 @@ const ChatWindow = ({ selectedUser }) => {
               .toUpperCase()}
           </div>
 
-          {/* Online indicator - temporary */}
           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-950 bg-green-400" />
         </div>
 
@@ -117,9 +179,13 @@ const ChatWindow = ({ selectedUser }) => {
             Online
           </p>
         </div>
+
       </div>
 
-      {/* Messages */}
+      {/* ======================================
+          MESSAGES
+      ====================================== */}
+
       <div className="flex-1 space-y-3 overflow-y-auto p-6">
 
         {loading && (
@@ -206,7 +272,10 @@ const ChatWindow = ({ selectedUser }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* ======================================
+          MESSAGE INPUT
+      ====================================== */}
+
       <form
         onSubmit={handleSendMessage}
         className="border-t border-white/10 bg-white/[0.02] p-4"
@@ -233,6 +302,7 @@ const ChatWindow = ({ selectedUser }) => {
 
         </div>
       </form>
+
     </main>
   );
 };
