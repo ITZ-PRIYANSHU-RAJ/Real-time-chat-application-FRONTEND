@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext.jsx";
+import UserSearch from "../components/UserSearch.jsx";
 
 const Chat = () => {
   const { user, logout } = useAuth();
@@ -54,10 +55,10 @@ const Chat = () => {
           </div>
 
           <div className="p-4">
-            <input
-              type="text"
-              placeholder="Search users..."
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/40"
+            <UserSearch
+                onSelectUser={(selectedUser) => {
+                console.log("Selected user:", selectedUser);
+                }}
             />
           </div>
 
