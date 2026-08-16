@@ -1,20 +1,26 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext.jsx";
 import UserSearch from "../components/UserSearch.jsx";
+import ChatWindow from "../components/ChatWindow.jsx";
 
 const Chat = () => {
   const { user, logout } = useAuth();
+
+  const [selectedUser, setSelectedUser] = useState(null);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="flex h-screen overflow-hidden">
 
+        {/* ================= SIDEBAR ================= */}
         <motion.aside
           initial={{ x: -30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
           className="flex w-full max-w-sm flex-col border-r border-white/10 bg-white/[0.03] backdrop-blur-xl"
         >
+          {/* Sidebar Header */}
           <div className="flex items-center justify-between border-b border-white/10 p-5">
             <div>
               <h1 className="text-xl font-bold">
@@ -26,27 +32,34 @@ const Chat = () => {
               </p>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={logout}
               className="rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-red-500/10 hover:text-red-400"
             >
               Logout
-            </button>
+            </motion.button>
           </div>
 
+          {/* Current User */}
           <div className="border-b border-white/10 p-4">
             <div className="flex items-center gap-3">
-              
+
+              {/* Avatar */}
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 font-bold">
-                {user?.fullName?.charAt(0).toUpperCase()}
+                {user?.fullName
+                  ?.charAt(0)
+                  .toUpperCase()}
               </div>
 
-              <div>
-                <p className="font-medium">
+              {/* User Info */}
+              <div className="min-w-0">
+                <p className="truncate font-medium">
                   {user?.fullName}
                 </p>
 
-                <p className="text-sm text-slate-400">
+                <p className="truncate text-sm text-slate-400">
                   @{user?.username}
                 </p>
               </div>
@@ -54,49 +67,69 @@ const Chat = () => {
             </div>
           </div>
 
-          <div className="p-4">
+          {/* Search */}
+          <div className="border-b border-white/10 p-4">
             <UserSearch
-                onSelectUser={(selectedUser) => {
-                console.log("Selected user:", selectedUser);
-                }}
+              onSelectUser={(selectedUser) => {
+                setSelectedUser(selectedUser);
+              }}
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto px-3">
-            <p className="px-2 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-              Recent Chats
+          {/* Selected User */}
+          <div className="flex-1 overflow-y-auto px-3 py-4">
+
+            <p className="px-2 py-2 text-xs font-medium uppercase tracking-wider text-slate-500">
+              Current Chat
             </p>
 
-            <div className="rounded-xl p-3 text-center text-sm text-slate-500">
-              No conversations yet
-            </div>
+            {selectedUser ? (
+              <motion.button
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                onClick={() => setSelectedUser(selectedUser)}
+                className="flex w-full items-center gap-3 rounded-xl bg-white/5 p-3 text-left transition hover:bg-white/10"
+              >
+                {/* Avatar */}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 font-semibold">
+                  {selectedUser.fullName
+                    ?.charAt(0)
+                    .toUpperCase()}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {selectedUser.fullName}
+                  </p>
+
+                  <p className="truncate text-xs text-slate-500">
+                    @{selectedUser.username}
+                  </p>
+                </div>
+
+                {/* Online indicator */}
+                <span className="ml-auto h-2.5 w-2.5 rounded-full bg-green-400" />
+              </motion.button>
+            ) : (
+              <div className="rounded-xl p-4 text-center text-sm text-slate-500">
+                Search for a user to start chatting.
+              </div>
+            )}
+
+          </div>
+
+          {/* Sidebar Footer */}
+          <div className="border-t border-white/10 p-4">
+            <p className="text-center text-xs text-slate-600">
+              Talksy • Real-time Chat
+            </p>
           </div>
         </motion.aside>
 
-        <main className="hidden flex-1 flex-col md:flex">
+        {/* ================= CHAT WINDOW ================= */}
 
-          <div className="flex flex-1 items-center justify-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="text-center"
-            >
-              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 text-4xl">
-                💬
-              </div>
+        <ChatWindow selectedUser={selectedUser} />
 
-              <h2 className="text-2xl font-semibold">
-                Welcome to Talksy
-              </h2>
-
-              <p className="mt-2 text-slate-500">
-                Search for a user and start a conversation.
-              </p>
-            </motion.div>
-          </div>
-
-        </main>
       </div>
     </div>
   );
