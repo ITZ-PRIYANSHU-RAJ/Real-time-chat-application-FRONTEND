@@ -131,7 +131,10 @@ const Chat = () => {
 
         {/* ================= CHAT WINDOW ================= */}
 
-        <ChatWindow selectedUser={selectedUser} />
+        <ChatWindow
+          selectedUser={selectedUser}
+          currentUser={user}
+        />
 
       </div>
     </div>
