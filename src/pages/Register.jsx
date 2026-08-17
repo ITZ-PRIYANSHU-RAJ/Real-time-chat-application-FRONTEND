@@ -44,10 +44,34 @@ const Register = () => {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4">
 
-      <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl" />
+      {/* Background Effects */}
+      <motion.div
+        animate={{
+          x: [0, 40, 0],
+          y: [0, 30, 0],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-cyan-500/20 blur-3xl"
+      />
 
-      <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl" />
+      <motion.div
+        animate={{
+          x: [0, -40, 0],
+          y: [0, -30, 0],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl"
+      />
 
+      {/* Register Card */}
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -56,10 +80,11 @@ const Register = () => {
       >
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
 
-          <div className="mb-7 text-center">
+          {/* Heading */}
+          <div className="mb-8 text-center">
             <motion.h1
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="text-3xl font-bold text-white"
             >
@@ -71,6 +96,7 @@ const Register = () => {
             </p>
           </div>
 
+          {/* Error */}
           {error && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
@@ -83,9 +109,10 @@ const Register = () => {
 
           <form
             onSubmit={handleSubmit}
-            className="space-y-4"
+            className="space-y-5"
           >
 
+            {/* Full Name */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Full Name
@@ -102,6 +129,7 @@ const Register = () => {
               />
             </div>
 
+            {/* Username */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Username
@@ -118,6 +146,7 @@ const Register = () => {
               />
             </div>
 
+            {/* Email */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Email
@@ -134,6 +163,7 @@ const Register = () => {
               />
             </div>
 
+            {/* Password */}
             <div>
               <label className="mb-2 block text-sm text-slate-300">
                 Password
@@ -151,18 +181,19 @@ const Register = () => {
               />
             </div>
 
+            {/* Submit */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 py-3 font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:shadow-purple-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 py-3 font-semibold text-white shadow-lg shadow-purple-500/20 transition hover:shadow-purple-500/40 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Creating Account..." : "Create Account"}
+              {loading ? "Creating account..." : "Create Account"}
             </motion.button>
-
           </form>
 
+          {/* Login */}
           <div className="mt-6 text-center text-sm text-slate-400">
             Already have an account?{" "}
 
@@ -174,7 +205,6 @@ const Register = () => {
               Login
             </button>
           </div>
-
         </div>
       </motion.div>
     </div>
