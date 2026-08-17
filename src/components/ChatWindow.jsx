@@ -1,13 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import api from "../services/api.js";
 import { socket } from "../lib/socket.js";
 
-const ChatWindow = ({ selectedUser, currentUser }) => {
+const ChatWindow = ({ selectedUser, currentUser,isOnline }) => {
   const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
   const [messageText, setMessageText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
+  // Scroll to bottom when messages change
+
+  useEffect(() => {
+  const handleTyping = ({ userId, typing }) => {
+    if (userId === selectedUser?._id) {
+      setIsTyping(typing);
+    }
+  };
+
+  socket.on("user-typing", handleTyping);
+
+  return () => {
+    socket.off("user-typing", handleTyping);
+  };
+}, [selectedUser]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
   // Fetch previous messages
   useEffect(() => {
     const fetchMessages = async () => {
@@ -69,23 +92,53 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     };
   }, [selectedUser, currentUser]);
 
-  // Send message
-  const handleSendMessage = (e) => {
-    e.preventDefault();
+  const handleTyping = (e) => {
+  const value = e.target.value;
 
-    if (!messageText.trim()) return;
+  setMessageText(value);
 
-    if (!currentUser?._id || !selectedUser?._id) return;
+  if (!currentUser?._id || !selectedUser?._id) {
+    return;
+  }
 
-    socket.emit("send-message", {
+  if (value.trim()) {
+    socket.emit("typing-start", {
       senderId: currentUser._id,
       receiverId: selectedUser._id,
-      text: messageText.trim(),
     });
+  } else {
+    socket.emit("typing-stop", {
+      senderId: currentUser._id,
+      receiverId: selectedUser._id,
+    });
+  }
+};
+  // Send message
+const handleSendMessage = (e) => {
+  e.preventDefault();
 
-    setMessageText("");
-  };
+  if (!messageText.trim()) return;
 
+  if (!currentUser?._id || !selectedUser?._id) {
+    return;
+  }
+
+  socket.emit("send-message", {
+    senderId: currentUser._id,
+    receiverId: selectedUser._id,
+    text: messageText.trim(),
+  });
+
+  socket.emit("typing-stop", {
+    senderId: currentUser._id,
+    receiverId: selectedUser._id,
+  });
+
+  setMessageText("");
+};
+
+  setMessageText("");
+};
   // No selected user
   if (!selectedUser) {
     return (
@@ -125,9 +178,16 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
             {selectedUser.fullName}
           </h2>
 
-          <p className="text-xs text-green-400">
-            ● Online
-          </p>
+          <p
+  className={`text-xs ${
+    isOnline
+      ? "text-green-400"
+      : "text-slate-500"
+  }`}
+>
+  ● {isOnline ? "Online" : "Offline"}
+</p>
+
         </div>
       </header>
 
@@ -189,6 +249,7 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
+                      <div ref={messagesEndRef} />
                     </p>
                   </div>
                 </motion.div>
@@ -228,5 +289,6 @@ const ChatWindow = ({ selectedUser, currentUser }) => {
     </main>
   );
 };
+
 
 export default ChatWindow;
