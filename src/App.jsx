@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Chat from "./pages/Chat.jsx";
+import Home from "./pages/Home.jsx";
 
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
@@ -15,7 +16,7 @@ function App() {
 
         <Route
           path="/"
-          element={<Navigate to="/login" replace />}
+          element={<Home />}
         />
 
         <Route
@@ -43,7 +44,7 @@ function App() {
 
         <Route
           path="*"
-          element={<Navigate to="/login" replace />}
+          element={<Home />}
         />
 
       </Routes>

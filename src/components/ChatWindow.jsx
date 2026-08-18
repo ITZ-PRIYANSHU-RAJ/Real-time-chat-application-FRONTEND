@@ -137,8 +137,6 @@ const handleSendMessage = (e) => {
   setMessageText("");
 };
 
-  setMessageText("");
-};
   // No selected user
   if (!selectedUser) {
     return (
@@ -165,10 +163,10 @@ const handleSendMessage = (e) => {
   }
 
   return (
-    <main className="flex flex-1 flex-col bg-slate-900">
+      <main className="chat-bg flex flex-1 flex-col">
 
       {/* Header */}
-      <header className="flex items-center gap-3 border-b border-white/10 px-6 py-4">
+      <header className="flex items-center gap-3 border-b border-white/10 bg-white/[.02] px-6 py-4">
         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-purple-500 font-bold text-white">
           {selectedUser.fullName?.charAt(0)?.toUpperCase()}
         </div>
@@ -259,6 +257,7 @@ const handleSendMessage = (e) => {
         )}
       </div>
 
+      {isTyping && <div className="px-6 pb-2 text-xs text-[#70d7c6]">{selectedUser.fullName} is typing...</div>}
       {/* Input */}
       <form
         onSubmit={handleSendMessage}
@@ -270,7 +269,7 @@ const handleSendMessage = (e) => {
             type="text"
             placeholder={`Message ${selectedUser.fullName}...`}
             value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
+            onChange={handleTyping}
             className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/50"
           />
 
