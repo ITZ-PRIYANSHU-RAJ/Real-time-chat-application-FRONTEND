@@ -43,7 +43,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 overflow-hidden relative">
+    <div className="noise auth-bg flex min-h-screen items-center justify-center overflow-hidden px-4">
 
       {/* Background Glow */}
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl" />
@@ -58,7 +58,7 @@ const Login = () => {
       >
 
         {/* Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="glass rounded-[2rem] p-8 shadow-2xl sm:p-10">
 
           {/* Heading */}
           <motion.div
@@ -67,12 +67,13 @@ const Login = () => {
             transition={{ delay: 0.2 }}
             className="text-center mb-8"
           >
-            <h1 className="text-3xl font-bold text-white">
-              Welcome Back
+            <div className="display mb-8 text-left text-xl font-bold tracking-tight">talksy<span className="gradient-text">.</span></div>
+            <h1 className="display text-3xl font-semibold tracking-tight text-white">
+              Welcome back
             </h1>
 
             <p className="text-slate-400 mt-2">
-              Login to continue chatting
+              Pick up where you left off.
             </p>
           </motion.div>
 

@@ -41,7 +41,7 @@ const Chat = () => {
   // ================= RENDER =================
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="noise min-h-screen bg-[#0d0e12] text-white">
       <div className="flex h-screen overflow-hidden">
 
         {/* ================= SIDEBAR ================= */}
@@ -50,7 +50,7 @@ const Chat = () => {
           initial={{ x: -30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="flex w-full max-w-sm flex-col border-r border-white/10 bg-white/[0.03] backdrop-blur-xl"
+          className="flex w-full max-w-sm flex-col border-r border-white/10 bg-[#121319] backdrop-blur-xl"
         >
 
           {/* Header */}
@@ -58,8 +58,8 @@ const Chat = () => {
           <div className="flex items-center justify-between border-b border-white/10 p-5">
 
             <div>
-              <h1 className="text-xl font-bold">
-                Talksy
+              <h1 className="display text-xl font-bold tracking-tight">
+                talksy<span className="gradient-text">.</span>
               </h1>
 
               <p className="text-xs text-slate-400">
@@ -190,7 +190,7 @@ const Chat = () => {
             ) : (
 
               <div className="rounded-xl p-4 text-center text-sm text-slate-500">
-                Search for a user to start chatting.
+              Search above to start a conversation.
               </div>
 
             )}
