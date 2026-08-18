@@ -42,7 +42,7 @@ const Register = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4">
+    <div className="noise auth-bg relative flex min-h-screen items-center justify-center overflow-hidden px-4">
 
       {/* Background Effects */}
       <motion.div
@@ -78,21 +78,21 @@ const Register = () => {
         transition={{ duration: 0.6 }}
         className="relative w-full max-w-md"
       >
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+        <div className="glass rounded-[2rem] p-8 shadow-2xl sm:p-10">
 
           {/* Heading */}
           <div className="mb-8 text-center">
-            <motion.h1
+            <div className="display mb-8 text-left text-xl font-bold tracking-tight">talksy<span className="gradient-text">.</span></div><motion.h1
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="text-3xl font-bold text-white"
             >
-              Create Account
+              Create your space
             </motion.h1>
 
             <p className="mt-2 text-slate-400">
-              Join the conversation
+              A home for the people you care about.
             </p>
           </div>
 
