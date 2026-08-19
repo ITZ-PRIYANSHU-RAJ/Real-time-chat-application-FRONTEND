@@ -44,9 +44,15 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post("/auth/login", {
-        email,
-        password,
-      });
+          email,
+          password,
+        });
+
+        const { user, token } = response.data;
+
+        localStorage.setItem("token", token);
+
+setUser(user);
 
       const loggedInUser = response.data.user;
 
@@ -76,10 +82,18 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await api.post(
-        "/auth/register",
-        userData
-      );
+            const response = await api.post("/auth/register", {
+        fullName,
+        username,
+        email,
+        password,
+      });
+
+      const { user, token } = response.data;
+
+      localStorage.setItem("token", token);
+
+      setUser(user);
 
       const registeredUser = response.data.user;
 
@@ -109,22 +123,18 @@ export const AuthProvider = ({ children }) => {
   // ==========================================
 
   const logout = async () => {
-    try {
-      await api.post("/auth/logout");
-
-      socket.disconnect();
-
-      setUser(null);
-    } catch (error) {
-      console.error(
-        "Logout Error:",
-        error.response?.data?.message || error.message
-      );
-    }
-  };
-
-  // ==========================================
-  // CHECK AUTH ON APP LOAD
+  try {
+    await api.post("/auth/logout");
+  } catch (error) {
+    console.error(
+      "Logout Error:",
+      error.response?.data?.message
+    );
+  } finally {
+    localStorage.removeItem("token");
+    setUser(null);
+  }
+};
   // ==========================================
 
   useEffect(() => {
